@@ -1,0 +1,33 @@
+From 20a44436cccba1dfbcb5cc5c7ca4deeafb2d976e Mon Sep 17 00:00:00 2001
+From: Lukas Zimmermann <luk.zim91@gmail.com>
+Date: Wed, 27 Mar 2019 14:11:08 +0100
+Subject: [PATCH] Remove Access logging in UserLandingInterceptor
+
+---
+ .../server/interceptors/UserLandingInterceptor.groovy  | 10 +++++-----
+ 1 file changed, 5 insertions(+), 5 deletions(-)
+
+diff --git a/transmart-server/grails-app/controllers/org/transmart/server/interceptors/UserLandingInterceptor.groovy b/transmart-server/grails-app/controllers/org/transmart/server/interceptors/UserLandingInterceptor.groovy
+index f21fc9c52..5ffb90b50 100644
+--- a/transmart-server/grails-app/controllers/org/transmart/server/interceptors/UserLandingInterceptor.groovy
++++ b/transmart-server/grails-app/controllers/org/transmart/server/interceptors/UserLandingInterceptor.groovy
+@@ -24,11 +24,11 @@ class UserLandingInterceptor {
+             eventMessage = "Login Failed"
+         }
+ 
+-        accessLogService.report(
+-                authContext.user,
+-                "User Access",
+-                eventMessage: eventMessage as Object,
+-                accessTime: new Date() as Object)
++//        accessLogService.report(
++//                authContext.user,
++//                "User Access",
++//                eventMessage: eventMessage as Object,
++//                accessTime: new Date() as Object)
+         true
+     }
+ 
+-- 
+2.21.0
+

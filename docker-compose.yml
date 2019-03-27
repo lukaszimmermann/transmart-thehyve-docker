@@ -1,0 +1,33 @@
+version: "3.7"
+
+services:
+  db:
+    image: lukaszimmermann/transmart-core-thehyve-postgres_test:v1
+    restart: always
+
+  transmart-server:
+    image: lukaszimmermann/transmart-core-thehyve-server:v1
+    depends_on:
+    -  db
+    environment:
+      PGHOST: db
+      PGPORT: 5432
+    ports:
+    - 8080:8080
+
+  adminer:
+    image: adminer
+    restart: always
+    depends_on:
+    - db
+    ports:
+      - 4000:8080
+
+  solr:
+    image: guywithnose/solr:4.5.1
+    ports:
+     - "8983:8983"
+    # entrypoint:
+    #   - docker-entrypoint.sh
+    #   - solr-precreate
+    #   - mycore
