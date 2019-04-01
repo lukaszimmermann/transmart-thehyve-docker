@@ -34,6 +34,10 @@ ENV TM_LZ_PWD tm_lz
 ENV TM_WZ_PWD tm_wz
 ENV USE_TRANSMART_BATCH 1
 ENV DEBIAN_FRONTEND noninteractive
+ENV PG_KEYCLOAK_ROLE keycloak
+ENV PG_KEYCLOAK_DATABASE "${PG_KEYCLOAK_ROLE}"
+ENV PG_LOCALE en_US.UTF-8
+ENV PG_ENCODING UTF8
 
 # Here we do the following steps in this order:
 # 1. Ensure that the PGDATA directory exists and set the correct permission
@@ -91,8 +95,10 @@ RUN mkdir -p "${PGDATA}" && \
     su -c "mkdir -p ${TABLESPACES}indx" "${POSTGRES_USER}" && \
     su -c "mkdir -p ${TABLESPACES}search_app" "${POSTGRES_USER}" && \
     su -c "mkdir -p ${TABLESPACES}transmart" "${POSTGRES_USER}" && \
-    su -c "cd /tmp; /usr/lib/postgresql/9.5/bin/initdb --username=${POSTGRES_USER} --encoding='UTF8' --locale='en_US.UTF-8'" "${POSTGRES_USER}" && \
+    su -c "cd /tmp; /usr/lib/postgresql/9.5/bin/initdb --username=${POSTGRES_USER} --encoding=${PG_ENCODING} --locale=${PG_LOCALE}" "${POSTGRES_USER}" && \
     su -c "cd /tmp; /usr/lib/postgresql/9.5/bin/pg_ctl -w start" "${POSTGRES_USER}" && \
+    su -c "cd /tmp; createuser -D -e -i -l -R -S --no-replication ${PG_KEYCLOAK_ROLE}" "${POSTGRES_USER}" && \
+    su -c "cd /tmp; createdb -e --encoding=${PG_ENCODING} --locale=${PG_LOCALE} --owner=${PG_KEYCLOAK_ROLE} ${PG_KEYCLOAK_DATABASE}" "${POSTGRES_USER}" && \
     su -c "cd /tmp; git clone -b dev https://github.com/thehyve/transmart-core" "${POSTGRES_USER}" && \
     su -c "cd /tmp; make -C /tmp/transmart-core/transmart-data postgres_test" "${POSTGRES_USER}" && \
     su -c "cd /tmp; /usr/lib/postgresql/9.5/bin/pg_ctl -w --mode=smart stop" "${POSTGRES_USER}" && \
