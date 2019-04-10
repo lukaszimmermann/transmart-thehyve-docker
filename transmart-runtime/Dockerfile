@@ -11,6 +11,11 @@ ENV TRANSMART_GROUP_NAME "${TRANSMART_USER_NAME}"
 ENV TRANSMART_GROUP_ID "${TRANSMART_USER_ID}"
 ENV DOCKERIZE_VERSION v0.6.1
 
+
+###########################################################################
+# * Create transmart user and group
+# * Install dockerize
+############################################################################
 WORKDIR /tmp
 RUN wget "https://github.com/jwilder/dockerize/releases/download/${DOCKERIZE_VERSION}/dockerize-alpine-linux-amd64-${DOCKERIZE_VERSION}.tar.gz" && \
     tar -C /usr/local/bin -xzvf "dockerize-alpine-linux-amd64-${DOCKERIZE_VERSION}.tar.gz" && \
@@ -18,5 +23,10 @@ RUN wget "https://github.com/jwilder/dockerize/releases/download/${DOCKERIZE_VER
     addgroup -g "${TRANSMART_GROUP_ID}" "${TRANSMART_GROUP_NAME}" && \
     adduser  -G "${TRANSMART_GROUP_NAME}" -D -u "${TRANSMART_USER_ID}" "${TRANSMART_USER_NAME}" && \
     rm -rf /tmp/* /var/tmp/* && sync
+
+
+############################################################################
+# Set runtime image properties
+############################################################################
 USER "${TRANSMART_USER_NAME}"
 WORKDIR "/home/${TRANSMART_USER_NAME}"
