@@ -1,33 +1,82 @@
 #!/bin/sh
 set -e
 
-# Checks whether the variable is set in the environment
+###############################################################################
+# Prints a fatal error and exits this script with an error code
+###############################################################################
 fatal() {
 		cat << EndOfMessage
 ###############################################################################
 !!!!!!!!!! FATAL ERROR !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ###############################################################################
-			The variable with the name '$1' is unset.
-			Please specify a value in this container environment using
-			-e in docker run or the environment section in Docker Compose.
+${1}
 ###############################################################################
 EndOfMessage
-		exit 1
+		exit "${2}"
 }
 
-# Here we check that all the required variables are set such that this
-# tranSMART Server instance can connect to the PostgreSQL instance
-[ ! -z ${PGHOST+x} ] || fatal PGHOST
-[ ! -z ${PGPORT+x} ] || fatal PGPORT
 
-# Fixed value, not configurable by user
+###############################################################################
+# Error message for a variable that is unset or empty during runtime
+###############################################################################
+fatalNotExists() {
+	read -d '' msg << EOF || true
+	The variable with the name '$1' is unset.
+	Please specify a value in this container environment using
+	-e in docker run, or the environment section in Docker Compose.
+EOF
+	fatal "${msg}" 1
+}
+
+
+###############################################################################
+# Error message for a variable that should be an absolute path, but isn't
+###############################################################################
+fatalPathNotAbsolute() {
+	read -d '' msg << EOF || true
+	The path in the environment variable '$1' is not absolute!
+EOF
+	fatal "${msg}" 2
+}
+
+
+###############################################################################
+# List of environment variables that need to be defined in the Dockerfile
+# (so in the container where this Entrypoint is gonna be executed in)
+###############################################################################
+# * TRANSMART_CONFIG_DIR     # Where the 'transmartConfig' file is located
+# * SERVICE_WAR_FILE         # The location of the executable war file
+
+
+###############################################################################
+# The values of these environment variables need to be absolute file paths
+###############################################################################
+[[ "${TRANSMART_CONFIG_DIR}" = /* ]] || fatalPathNotAbsolute TRANSMART_CONFIG_DIR
+[[ "${SERVICE_WAR_FILE}" = /* ]]     || fatalPathNotAbsolute SERVICE_WAR_FILE
+
+
+###############################################################################
+# These variables need to be set during runtime
+###############################################################################
+[ ! -z ${PGHOST+x} ] || fatalNotExists PGHOST   # Host of Postgres
+[ ! -z ${PGPORT+x} ] || fatalNotExists PGPORT   # Port which tranSMART should use for PG
+
+
+###############################################################################
+# Ensure that the config directory for tranSMART actually exists
+###############################################################################
+mkdir -p "${TRANSMART_CONFIG_DIR}"
+
+
+###############################################################################
+# List of variables that are fixed in the Postgres image and cannot be changed
+###############################################################################
 PGDATABASE=transmart
 BIOMART_USER='biomart_user'
 
-# Write the Data Source configuration based on the values of the variable
-# above
-
-
+###############################################################################
+# Sets the runtime configuration for tranSMART Server
+###############################################################################
 cat > "${TRANSMART_CONFIG_DIR}/DataSource.groovy" <<EndOfMessage
 dataSources {
     dataSource {
@@ -89,11 +138,23 @@ environments {
     }
 }
 EndOfMessage
+sync
 
-# Wait for postgres database before trying to start this server
+
+###############################################################################
+# Waiting for all requied services to become available via TCP before
+# trying to run tranSMART Server
+###############################################################################
 dockerize -wait "tcp://${PGHOST}:${PGPORT}"
 
+
+###############################################################################
+# Finally run tranSMART Server
+###############################################################################
 exec java -jar "${SERVICE_WAR_FILE}"
+
+
+# Some notes:
 
 # This directory must exist. If you are running PostgreSQL under your own user,
 # you just have to make sure the directory is owned by you.
