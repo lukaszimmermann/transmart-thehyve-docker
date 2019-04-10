@@ -48,12 +48,6 @@ EOF
 # * SERVICE_WAR_FILE         # The location of the executable war file
 
 
-###############################################################################
-# The values of these environment variables need to be absolute file paths
-###############################################################################
-[[ "${TRANSMART_CONFIG_DIR}" = /* ]] || fatalPathNotAbsolute TRANSMART_CONFIG_DIR
-[[ "${SERVICE_WAR_FILE}" = /* ]]     || fatalPathNotAbsolute SERVICE_WAR_FILE
-
 
 ###############################################################################
 # These variables need to be set during runtime

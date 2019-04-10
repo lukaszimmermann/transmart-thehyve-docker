@@ -1,8 +1,21 @@
 version: "3.7"
 
 services:
-  database:
+
+  #############################################################################
+  # tranSMART Postgres database
+  #############################################################################
+  db:
     image: lukaszimmermann/transmart-core-thehyve-postgres_test:v1
+    ports:
+      - ${databaseHostPort}:5432 # Makes Postgres available to the outside world
+
+  adminer:
+    image: adminer
+    depends_on:
+      - db
+    ports:
+      - ${adminerHostPort}:8080
 
   # keycloak:
   #   image: jboss/keycloak:5.0.0
@@ -10,37 +23,24 @@ services:
   #     KEYCLOAK_USER: admin
   #     KEYCLOAK_PASSWORD: admin
   #     DB_VENDOR: postgres
-  #     DB_ADDR: database
+  #     DB_ADDR: db
   #     DB_PORT: 5432
   #     DB_DATABASE: keycloak # This is the default of the image
   #     DB_USER: keycloak # This is the default of the image
   #     DB_PASSWORD: password # This is the default
-
-
-  solr:
-    image: guywithnose/solr:4.5.1
-    ports:
-     - "8983:8983"
-    # entrypoint:
-    #   - docker-entrypoint.sh
-    #   - solr-precreate
-    #   - mycore
+  #
+  #
+  # solr:
+  #   image: guywithnose/solr:4.5.1
+  #   ports:
+  #     - ${solrHostPort}:8983
 
   transmart-server:
     image: lukaszimmermann/transmart-core-thehyve-server:v1
     depends_on:
-    - database
-    - solr
+      - db
     environment:
-      PGHOST: database
+      PGHOST: db
       PGPORT: 5432
     ports:
-    - 8080:8080
-
-  adminer:
-    image: adminer
-    restart: always
-    depends_on:
-    - database
-    ports:
-      - 4000:8080
+       - 8080:8080
